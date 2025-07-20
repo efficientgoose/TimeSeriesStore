@@ -152,7 +152,7 @@ System.out.println("Cleanup executed. Removed " + (before - after) + " expired t
 
 1. **Microservice Architecture**: Decouple the insert/query logic from the persistence/retrieve logic 
 2. **Separate Class for CSV Utility methods**: Add all CSV utility methods to a seperate class to improve readability
-3. **Advanced Logging and Analytics**: User Log4j library along with Analytic tools for better visualization
+3. **Advanced Logging and Analytics**: Use Log4j library along with Analytic tools for better visualization
 
 ## 🙏 Thank You
 
