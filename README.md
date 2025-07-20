@@ -1,131 +1,162 @@
-# Time Series Store Interview Project
+# In-Memory Time Series Store
 
-This is a skeleton project for implementing an in-memory time series data store with persistence capabilities.
+A high-performance, thread-safe, in-memory time series data store implementation with persistence capabilities. Built for efficient handling of time-based metric data with support for concurrent operations and tag-based filtering.
 
-## Project Structure
+![Architecture Diagram](./timeseries_architecture_diagram.svg)
 
-- `TimeSeriesStore.java`: Interface defining the store's operations
-- `DataPoint.java`: Class representing a single data point
-- `TimeSeriesStoreImpl.java`: Skeleton implementation to be completed
-- `TimeSeriesStoreTest.java`: Basic test cases for the implementation
+##  Features
 
-## Requirements
+### Core Functionality
+- **Fast Insertions**: Optimized for high-throughput write operations (up to 10,000 data points/second)
+- **Efficient Queries**: Time range and tag-based filtering with minimal latency
+- **Thread Safety**: Full concurrent read/write support using `ConcurrentSkipListMap`
+- **Persistence**: Automatic data persistence to CSV files with recovery on restart
+- **Memory Management**: Configurable data retention (24 hours default) with automatic cleanup
 
-The implementation should:
-
-1. Support inserting data points with timestamps, metric names, values, and tags
-2. Allow querying data points by time range and tag filters
-3. Persist data to survive process restarts
-4. Be thread-safe for concurrent reads and writes
-5. Handle the specified scale requirements (see problem statement)
-
-## Getting Started
-
-1. Review the interfaces and skeleton implementation
-2. Think about the data structures you'll need for efficient storage and querying
-3. Implement the TODOs in `TimeSeriesStoreImpl.java`
-4. Run the tests to verify your implementation
-
-## Performance Considerations
-
-- Optimize for fast writes (insert operation)
-- Ensure efficient time range queries
-- Support tag-based filtering without full scans
-- Minimize memory usage
-- Implement effective persistence strategy
+### Advanced Capabilities
+- **Tag-Based Filtering**: Support for complex multi-tag queries with AND logic
+- **Duplicate Prevention**: Automatic deduplication of identical data points
+- **Graceful Shutdown**: Ensures data persistence before application termination
+- **Performance Monitoring**: Built-in memory usage tracking and cleanup statistics
 
 
-### Building and Testing
+##  Performance Specifications
 
-```bash
-# On Linux/Mac
-./gradlew build
+| Metric                | Target                  | Achieved    |
+|-----------------------|-------------------------|-------------|
+| Write Throughput      | 10,000 ops/sec          | Supported   |
+| Query Throughput      | 1,000 queries/sec       | Supported   |
+| Maximum Metrics       | 100,000 unique metrics  | Supported   |
+| Data Retention        | 24 hours (configurable) | Implemented |
+| Concurrent Operations | Multi-threaded R/W      | Thread-safe |
 
-# On Windows
-gradlew.bat build
+##  Architecture
 
-# Running tests
-./gradlew test
+### Data Model
+```java
+DataPoint {
+    long timestamp;        // Unix timestamp in milliseconds
+    String metric;         // Metric name (e.g., "cpu.usage")
+    double value;          // Numeric value
+    Map<String,String> tags; // Key-value metadata
+}
 ```
 
-## Interview Tips
+### Storage Structure
+- **Primary Index**: `ConcurrentSkipListMap<Long, List<DataPoint>>` sorted by timestamp
+- **Concurrency**: `CopyOnWriteArrayList` for handling multiple data points per timestamp
+- **Persistence**: CSV format with automatic serialization/deserialization
 
-- Focus on designing efficient data structures before writing code
-- Consider time complexity for all operations
-- Think about memory-performance tradeoffs
-- Ensure thread safety without sacrificing performance
+### Test Coverage
+### Unit + Performance/Stress Tests:
+-  Basic insert/query operations
+-  Time range filtering
+-  Tag-based filtering
+-  Multi-tag compound filters
+-  Data cleanup and expiration
+-  Persistence and recovery
+-  Concurrent operations(500k records)
+-  Performance under load(500k records)
 
-Good luck!
-
-
-
-# Generating Sample Data
-
-The project includes a Python script for generating realistic time series data to test your implementation. This script creates a CSV file with timestamp, metric, value, and tags that match the format needed by the time series store.
-
-## Prerequisites
-
-- Python 3.6 or higher
-
-## Setup
-
+##  Project Structure
 
 ```
-
-## Basic Usage
-
-Generate sample data with default settings (approximately 5 million data points):
-
-# Make it executable
-chmod +x generate_sample_data.py
-python generate_sample_data.py
+com/interview/timeseries/
+├── TimeSeriesStore.java           # Main interface
+├── TimeSeriesStoreImpl.java       # Core implementation
+├── DataPoint.java                 # Data model
+├── Main.java                      # Demo application
+├── TimeSeriesStoreTest.java       # Unit tests
+└── TimeSeriesStorePerformanceTest.java # Performance tests
 ```
 
-This will create a file named `time_series_data.csv` in the current directory.
+##  Configuration
 
-## Default Configuration
+### Retention Policy
+```java
+// Default: 24 hours
+private final long EXPIRY_DURATION_MS = 24L * 60 * 60 * 1000;
 
-The default configuration is set to generate approximately 5 million rows of data:
-- Time range: Last 24 hours
-- Interval: 15 seconds between data points
-- 25 different metrics (including high-cardinality metrics)
-- 35 different hosts
-- Total rows: ~5,040,000 data points (25 metrics × 35 hosts × 24 hours × 240 points/hour)
-
-This high-resolution dataset with 15-second intervals provides a thorough test for a time series database.
-
-## Special High-Cardinality Metrics
-
-The generated data includes special high-cardinality metrics to test tag filtering performance:
-
-1. **request.latency**: Contains `customer_id` (10,000 unique values) and `request_id` (1,000 unique values) tags
-2. **user.activity**: Contains `customer_id` tags with 10,000 unique values
-3. **transaction.value**: Contains both `customer_id` and `request_id` with high cardinality
-
-These metrics are excellent for testing:
-- Performance with high-cardinality tag filters
-- Memory usage with many unique tag values
-- Index efficiency for tag lookup
-
-## Examples
-
-### Example 1: Generate a smaller dataset for quick tests
-
-```bash
-# Generate 1 hour of 15-second data
-python generate_sample_data.py --start-time $(date -d "1 hour ago" +%s) --metrics 10 --hosts 15
+// Cleanup frequency: Every hour
+cleanerExecuter.scheduleAtFixedRate(..., 1, 1, TimeUnit.HOURS);
 ```
 
-This generates ~36,000 rows, good for quick testing during development.
+### Persistence Settings
+```java
+// CSV file location
+private final String persistenceFile = "data_store.csv";
 
-### Example 2: Generate a massive dataset for extreme stress testing
-
-```bash
-# Generate 3 days of 15-second data
-python generate_sample_data.py --start-time $(date -d "3 days ago" +%s) --metrics 30 --hosts 50
+// File format: timestamp,metric,value,tag1=value1;tag2=value2
 ```
 
-This generates ~15.1 million rows, suitable for:
-- Testing memory efficiency at scale
-- Performance with extremely high volumes
-- System stability under heavy load
+## Performance Optimization
+
+### Write Performance
+- **Data Structure**: `ConcurrentSkipListMap` provides O(log n) insertions
+- **Concurrency**: Lock-free operations for high-throughput writes
+- **Deduplication**: Efficient duplicate detection using `contains()`
+
+### Query Performance
+- **Time Range**: O(log n) for range identification using `subMap()`
+- **Filtering**: Stream-based parallel processing
+- **Memory**: Minimal object allocation during queries
+
+### Memory Management
+- **Automatic Cleanup**: Background thread removes expired data
+- **Lazy Loading**: Data loaded from disk only on startup
+- **Efficient Storage**: Shared timestamp keys reduce memory overhead
+## Thread Safety
+
+### Concurrency Model
+- **Write Operations**: `ConcurrentSkipListMap.compute()` ensures atomic updates
+- **Read Operations**: Lock-free traversal with consistent snapshots
+- **File Operations**: Synchronized using `diskLock` for data integrity
+- **Cleanup Operations**: Coordinated with main data operations
+
+### Race Condition Prevention
+- Atomic insertion with duplicate checking
+- Thread-safe list implementations (`CopyOnWriteArrayList`)
+- Proper synchronization for disk I/O operations
+
+## Monitoring & Metrics
+
+### Built-in Monitoring
+```java
+// Memory usage tracking
+private void logMemory(String label) {
+    Runtime runtime = Runtime.getRuntime();
+    long used = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024);
+    System.out.println("[" + label + "] Memory used: " + used + " MB");
+}
+
+// Cleanup statistics
+System.out.println("Cleanup executed. Removed " + (before - after) + " expired timestamps.");
+```
+
+## Data Persistence
+
+### Storage Format
+```csv
+# Format: timestamp,metric,value,tags
+1620000000000,cpu.usage,45.2,host=server1;datacenter=us-west
+1620000001000,memory.used,60.0,host=server1
+```
+
+### Recovery Process
+1. **Startup**: Automatically loads existing CSV data
+2. **Validation**: Parses and validates each data point
+3. **Insertion**: Rebuilds in-memory index structure
+4. **Cleanup**: Removes expired entries post-recovery
+
+## Improvements That I Feel Can Be Made
+
+1. **Microservice Architecture**: Decouple the insert/query logic from the persistence/retrieve logic 
+2. **Separate Class for CSV Utility methods**: Add all CSV utility methods to a seperate class to improve readability
+3. **Advanced Logging and Analytics**: User Log4j library along with Analytic tools for better visualization
+
+## 🙏 Thank You
+
+Thank you for taking the time to review this assignment.  
+I truly enjoyed designing and implementing this project—it was both challenging and rewarding!
+
+Looking forward to your valuable feedback! 😊

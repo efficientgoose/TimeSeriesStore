@@ -1,0 +1,174 @@
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .class-box { fill: #e3f2fd; stroke: #1976d2; stroke-width: 2; }
+      .interface-box { fill: #fff3e0; stroke: #f57c00; stroke-width: 2; }
+      .data-box { fill: #e8f5e8; stroke: #388e3c; stroke-width: 2; }
+      .storage-box { fill: #fce4ec; stroke: #c2185b; stroke-width: 2; }
+      .flow-arrow { stroke: #666; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .data-flow { stroke: #4caf50; stroke-width: 3; fill: none; marker-end: url(#greenArrow); }
+      .persistence-flow { stroke: #ff5722; stroke-width: 2; fill: none; marker-end: url(#redArrow); }
+      .class-title { font-family: Arial, sans-serif; font-weight: bold; font-size: 14px; }
+      .method-text { font-family: Arial, sans-serif; font-size: 11px; fill: #333; }
+      .label-text { font-family: Arial, sans-serif; font-size: 12px; font-weight: bold; fill: #555; }
+      .flow-label { font-family: Arial, sans-serif; font-size: 10px; fill: #666; }
+    </style>
+    
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+    
+    <marker id="greenArrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4caf50"/>
+    </marker>
+    
+    <marker id="redArrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ff5722"/>
+    </marker>
+  </defs>
+  
+  <!-- Title -->
+  <text x="600" y="30" text-anchor="middle" class="class-title" font-size="18" fill="#1976d2">Time Series Store - Architecture Data Flow</text>
+  
+  <!-- Interface -->
+  <rect x="50" y="60" width="200" height="120" rx="5" class="interface-box"/>
+  <text x="150" y="80" text-anchor="middle" class="class-title" fill="#f57c00">&lt;&lt;Interface&gt;&gt;</text>
+  <text x="150" y="95" text-anchor="middle" class="class-title">TimeSeriesStore</text>
+  <text x="60" y="115" class="method-text">+ insert(DataPoint): boolean</text>
+  <text x="60" y="130" class="method-text">+ query(...): List&lt;DataPoint&gt;</text>
+  <text x="60" y="145" class="method-text">+ initialize(): boolean</text>
+  <text x="60" y="160" class="method-text">+ shutdown(): boolean</text>
+  
+  <!-- DataPoint Class -->
+  <rect x="320" y="60" width="180" height="140" rx="5" class="data-box"/>
+  <text x="410" y="80" text-anchor="middle" class="class-title" fill="#388e3c">DataPoint</text>
+  <line x1="330" y1="85" x2="490" y2="85" stroke="#388e3c" stroke-width="1"/>
+  <text x="330" y="100" class="method-text">- timestamp: long</text>
+  <text x="330" y="115" class="method-text">- metric: String</text>
+  <text x="330" y="130" class="method-text">- value: double</text>
+  <text x="330" y="145" class="method-text">- tags: Map&lt;String,String&gt;</text>
+  <line x1="330" y1="155" x2="490" y2="155" stroke="#388e3c" stroke-width="1"/>
+  <text x="330" y="175" class="method-text">+ getters/setters</text>
+  <text x="330" y="190" class="method-text">+ equals/hashCode</text>
+  
+  <!-- Main Implementation -->
+  <rect x="50" y="220" width="280" height="200" rx="5" class="class-box"/>
+  <text x="190" y="240" text-anchor="middle" class="class-title" fill="#1976d2">TimeSeriesStoreImpl</text>
+  <line x1="60" y1="245" x2="320" y2="245" stroke="#1976d2" stroke-width="1"/>
+  <text x="60" y="260" class="method-text">- timeSeriesMap: ConcurrentSkipListMap</text>
+  <text x="60" y="275" class="method-text">- cleanerExecuter: ScheduledExecutorService</text>
+  <text x="60" y="290" class="method-text">- diskLock: Object</text>
+  <text x="60" y="305" class="method-text">- EXPIRY_DURATION_MS: long</text>
+  <line x1="60" y1="315" x2="320" y2="315" stroke="#1976d2" stroke-width="1"/>
+  <text x="60" y="330" class="method-text">+ insert(DataPoint): boolean</text>
+  <text x="60" y="345" class="method-text">+ query(...): List&lt;DataPoint&gt;</text>
+  <text x="60" y="360" class="method-text">- saveToDisk(): void</text>
+  <text x="60" y="375" class="method-text">- loadFromDisk(): void</text>
+  <text x="60" y="390" class="method-text">- startCleanupTask(): void</text>
+  <text x="60" y="405" class="method-text">- runCleanupNow(): void</text>
+  
+  <!-- Data Structure Detail -->
+  <rect x="380" y="220" width="300" height="120" rx="5" class="storage-box"/>
+  <text x="530" y="240" text-anchor="middle" class="class-title" fill="#c2185b">In-Memory Storage</text>
+  <line x1="390" y1="245" x2="670" y2="245" stroke="#c2185b" stroke-width="1"/>
+  <text x="390" y="260" class="method-text">ConcurrentSkipListMap&lt;Long, List&lt;DataPoint&gt;&gt;</text>
+  <text x="390" y="280" class="method-text">Key: Timestamp (sorted)</text>
+  <text x="390" y="295" class="method-text">Value: List of DataPoints (CopyOnWriteArrayList)</text>
+  <text x="390" y="315" class="method-text">✓ Thread-safe concurrent operations</text>
+  <text x="390" y="330" class="method-text">✓ O(log n) insertion and range queries</text>
+  
+  <!-- Disk Persistence -->
+  <rect x="750" y="220" width="200" height="120" rx="5" class="storage-box"/>
+  <text x="850" y="240" text-anchor="middle" class="class-title" fill="#c2185b">Disk Persistence</text>
+  <line x1="760" y1="245" x2="940" y2="245" stroke="#c2185b" stroke-width="1"/>
+  <text x="760" y="260" class="method-text">File: data_store.csv</text>
+  <text x="760" y="280" class="method-text">Format:</text>
+  <text x="760" y="295" class="method-text">timestamp,metric,value,tags</text>
+  <text x="760" y="315" class="method-text">✓ Automatic save on shutdown</text>
+  <text x="760" y="330" class="method-text">✓ Load on initialization</text>
+  
+  <!-- Background Services -->
+  <rect x="50" y="450" width="250" height="100" rx="5" class="class-box"/>
+  <text x="175" y="470" text-anchor="middle" class="class-title" fill="#1976d2">Background Services</text>
+  <line x1="60" y1="475" x2="290" y2="475" stroke="#1976d2" stroke-width="1"/>
+  <text x="60" y="490" class="method-text">ScheduledExecutorService</text>
+  <text x="60" y="510" class="method-text">• Cleanup expired data (24h TTL)</text>
+  <text x="60" y="525" class="method-text">• Runs every hour</text>
+  <text x="60" y="540" class="method-text">• Thread-safe operations</text>
+  
+  <!-- Test Classes -->
+  <rect x="350" y="450" width="200" height="100" rx="5" class="class-box"/>
+  <text x="450" y="470" text-anchor="middle" class="class-title" fill="#1976d2">Test Suite</text>
+  <line x1="360" y1="475" x2="540" y2="475" stroke="#1976d2" stroke-width="1"/>
+  <text x="360" y="490" class="method-text">TimeSeriesStoreTest</text>
+  <text x="360" y="505" class="method-text">• Unit tests</text>
+  <text x="360" y="520" class="method-text">PerformanceTest</text>
+  <text x="360" y="535" class="method-text">• Load stress tests</text>
+  
+  <!-- Main Demo -->
+  <rect x="600" y="450" width="150" height="100" rx="5" class="class-box"/>
+  <text x="675" y="470" text-anchor="middle" class="class-title" fill="#1976d2">Main Demo</text>
+  <line x1="610" y1="475" x2="740" y2="475" stroke="#1976d2" stroke-width="1"/>
+  <text x="610" y="490" class="method-text">Sample usage</text>
+  <text x="610" y="505" class="method-text">• Insert operations</text>
+  <text x="610" y="520" class="method-text">• Query examples</text>
+  <text x="610" y="535" class="method-text">• Lifecycle demo</text>
+  
+  <!-- Data Flow Arrows -->
+  <!-- Interface to Implementation -->
+  <path d="M 150 180 L 150 220" class="flow-arrow"/>
+  <text x="160" y="205" class="flow-label">implements</text>
+  
+  <!-- DataPoint to Implementation -->
+  <path d="M 320 130 L 280 130 L 280 220" class="flow-arrow"/>
+  <text x="285" y="175" class="flow-label">uses</text>
+  
+  <!-- Implementation to Storage -->
+  <path d="M 330 280 L 380 280" class="data-flow"/>
+  <text x="340" y="275" class="flow-label">stores in</text>
+  
+  <!-- Storage to Disk -->
+  <path d="M 680 280 L 750 280" class="persistence-flow"/>
+  <text x="695" y="275" class="flow-label">persists to</text>
+  
+  <!-- Implementation to Background Services -->
+  <path d="M 150 420 L 150 450" class="flow-arrow"/>
+  
+  <!-- Data Flow Labels -->
+  <text x="50" y="590" class="label-text" fill="#4caf50">Data Flow:</text>
+  <line x1="120" y1="590" x2="150" y2="590" stroke="#4caf50" stroke-width="3"/>
+  <text x="160" y="595" class="flow-label">In-memory operations</text>
+  
+  <text x="50" y="610" class="label-text" fill="#ff5722">Persistence:</text>
+  <line x1="130" y1="610" x2="160" y2="610" stroke="#ff5722" stroke-width="2"/>
+  <text x="170" y="615" class="flow-label">Disk I/O operations</text>
+  
+  <text x="50" y="630" class="label-text" fill="#666">Dependencies:</text>
+  <line x1="140" y1="630" x2="170" y2="630" stroke="#666" stroke-width="2"/>
+  <text x="180" y="635" class="flow-label">Class relationships</text>
+  
+  <!-- Performance Notes -->
+  <rect x="800" y="450" width="350" height="150" rx="5" fill="#f5f5f5" stroke="#999" stroke-width="1"/>
+  <text x="975" y="470" text-anchor="middle" class="class-title" fill="#333">Performance Characteristics</text>
+  <line x1="810" y1="475" x2="1140" y2="475" stroke="#999" stroke-width="1"/>
+  
+  <text x="810" y="495" class="method-text" font-weight="bold" fill="#4caf50">Insertions:</text>
+  <text x="810" y="510" class="method-text">• O(log n) time complexity</text>
+  <text x="810" y="525" class="method-text">• 10,000+ ops/sec throughput</text>
+  
+  <text x="810" y="545" class="method-text" font-weight="bold" fill="#2196f3">Queries:</text>
+  <text x="810" y="560" class="method-text">• O(log n) range identification</text>
+  <text x="810" y="575" class="method-text">• Parallel stream processing</text>
+  
+  <!-- Thread Safety Badge -->
+  <rect x="800" y="360" width="120" height="60" rx="5" fill="#e8f5e8" stroke="#4caf50" stroke-width="2"/>
+  <text x="860" y="380" text-anchor="middle" class="method-text" font-weight="bold" fill="#4caf50">THREAD-SAFE</text>
+  <text x="860" y="395" text-anchor="middle" class="method-text" fill="#4caf50">✓ Concurrent R/W</text>
+  <text x="860" y="410" text-anchor="middle" class="method-text" fill="#4caf50">✓ Lock-free ops</text>
+  
+  <!-- Memory Management Badge -->
+  <rect x="950" y="360" width="120" height="60" rx="5" fill="#fff3e0" stroke="#ff9800" stroke-width="2"/>
+  <text x="1010" y="380" text-anchor="middle" class="method-text" font-weight="bold" fill="#ff9800">AUTO-CLEANUP</text>
+  <text x="1010" y="395" text-anchor="middle" class="method-text" fill="#ff9800">✓ 24h retention</text>
+  <text x="1010" y="410" text-anchor="middle" class="method-text" fill="#ff9800">✓ Scheduled GC</text>
+</svg>
