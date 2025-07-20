@@ -1,0 +1,9 @@
+1753042347878,cpu.usage,45.2,host=server1
+1753042355128,cpu.usage,25.1,host=server1;datacenter=us-west
+1753042355128,memory.used,60.0,host=server1;datacenter=us-west
+1753042360128,cpu.usage,27.3,host=server2;datacenter=us-west
+1753042365128,cpu.usage,22.9,host=server3;datacenter=us-east
+1753042375128,memory.used,62.5,host=server1;datacenter=us-east
+1753042385128,network.in.bytes,1030.5,service=api;datacenter=us-west
+1753042387128,network.in.bytes,1500.0,service=api;datacenter=us-west
+1753042390128,network.in.bytes,987.0,service=web;datacenter=us-west
